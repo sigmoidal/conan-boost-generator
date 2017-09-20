@@ -191,12 +191,12 @@ class boost(Generator):
                 pass
             return "$(DEFAULT)"
         elif self.b2_os == "windows":
-            return win_get_cl_path
+            return self.win_cl_exe
         else:
             return "$(DEFAULT)"
 
     @property
-    def win_get_cl_path(self):
+    def win_cl_exe(self):
         vs_root = tools.vs_installation_path(str(self.settings.compiler.version))
         cl_exe = \
             glob.glob(os.path.join(vs_root,"VC","Tools","MSVC","*","bin","*","*","cl.exe")) + \
