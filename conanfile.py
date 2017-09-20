@@ -191,9 +191,7 @@ class boost(Generator):
                 pass
             return "$(DEFAULT)"
         elif self.b2_os == "windows":
-            test = self.win_get_cl_path
-            print("test = " + test)
-            return test
+            return win_get_cl_path
         else:
             return "$(DEFAULT)"
 
