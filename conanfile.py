@@ -50,7 +50,8 @@ class boost(Generator):
             .replace("{{{runtime_link}}}", self.b2_runtime_link) \
             .replace("{{{toolset_version}}}", self.b2_toolset_version) \
             .replace("{{{toolset_exec}}}", self.b2_toolset_exec) \
-            .replace("{{{libcxx}}}", self.b2_libcxx)
+            .replace("{{{libcxx}}}", self.b2_libcxx) \
+            .replace("{{{libpath}}}", self.b2_icu_lib_paths)
             
            
         return {
@@ -293,3 +294,12 @@ class boost(Generator):
             return pyver.value
         else:
             return ""
+
+    @property
+    def b2_icu_lib_paths(self):
+        try:
+            if self.conanfile.options.use_icu:
+                return '"{0}"'.format('" "'.join(self.deps_build_info["icu"].lib_paths)).replace('\\', '/')
+        except:
+            pass
+        return ""
