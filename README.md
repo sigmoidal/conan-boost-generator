@@ -55,11 +55,7 @@ The following command both runs all the steps of the conan file, and publishes t
 
 ## Upload to bintray 
 
-<<<<<<< HEAD
-    $ conan upload --all --remote bincrafters Boost.Generator/0.0.1@bincrafters/stable
-=======
-    $ conan upload --all --remote bincrafters Boost.Generator/1.64.0@bincrafters/testing
->>>>>>> testing/1.64.0
+    $ conan upload --all --remote bincrafters Boost.Generator/1.64.0@bincrafters/stable
 
 ### License
 [Boost](LICENSE)
