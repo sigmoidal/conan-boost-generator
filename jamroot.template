@@ -137,6 +137,8 @@ project boost
     <include>$(LIBRARIES)/include
     <library-path>$(LIBPATH)
     {{{libcxx}}}
+    {{{arch_flags}}}
+    {{{isysroot}}}
 :   build-dir bin
 :   default-build {{{variant}}}
     <target-os>{{{os}}}
