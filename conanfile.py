@@ -1,6 +1,7 @@
 from conans.model.conan_generator import Generator
 from conans import ConanFile, os, tools, load
 import glob
+import subprocess
 
 # This is the normal packaging info since generators
 # get published just like other packages. Although
@@ -52,7 +53,8 @@ class boost(Generator):
             .replace("{{{toolset_exec}}}", self.b2_toolset_exec) \
             .replace("{{{libcxx}}}", self.b2_libcxx) \
             .replace("{{{libpath}}}", self.b2_icu_lib_paths) \
-            .replace("{{{arch_flags}}}", self.b2_arch_flags)
+            .replace("{{{arch_flags}}}", self.b2_arch_flags) \
+            .replace("{{{isysroot}}}", self.b2_isysroot)
 
 
         return {
@@ -319,7 +321,33 @@ class boost(Generator):
             return None
 
     @property
+    def apple_sdk(self):
+        if self.settings.os == "Macos":
+            return "macosx"
+        elif self.settings.os == "iOS":
+            if str(self.settings.arch).startswith('x86'):
+                return "iphonesimulator"
+            elif str(self.settings.arch).startswith('arm'):
+                return "iphoneos"
+            else:
+                return None
+        return None
+
+    def command_output(self, command):
+        return subprocess.check_output(command, shell=False).strip()
+
+    @property
+    def apply_isysroot(self):
+        return self.command_output(['xcrun', '--show-sdk-path', '-sdk', self.apple_sdk])
+
+    @property
     def b2_arch_flags(self):
         if self.b2_os == 'darwin' or self.b2_os == 'iphone':
             return '<flags>"-arch {0}"'.format(self.apple_arch)
+        return ''
+
+    @property
+    def b2_isysroot(self):
+        if self.b2_os == 'darwin' or self.b2_os == 'iphone':
+            return '<flags>"-isysroot {0}"'.format(self.apply_isysroot)
         return ''
