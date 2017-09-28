@@ -51,9 +51,10 @@ class boost(Generator):
             .replace("{{{toolset_version}}}", self.b2_toolset_version) \
             .replace("{{{toolset_exec}}}", self.b2_toolset_exec) \
             .replace("{{{libcxx}}}", self.b2_libcxx) \
-            .replace("{{{libpath}}}", self.b2_icu_lib_paths)
-            
-           
+            .replace("{{{libpath}}}", self.b2_icu_lib_paths) \
+            .replace("{{{arch_flags}}}", self.b2_arch_flags)
+
+
         return {
             "jamroot" : jamroot_content,
             "boostcpp.jam" : self.get_boostcpp_content(), 
@@ -303,3 +304,22 @@ class boost(Generator):
         except:
             pass
         return ""
+
+    @property
+    def apple_arch(self):
+        if self.settings.arch == "armv7":
+            return "armv7"
+        elif self.settings.arch == "armv8":
+            return "arm64"
+        elif self.settings.arch == "x86":
+            return "i386"
+        elif self.settings.arch == "x86_64":
+            return "x86_64"
+        else:
+            return None
+
+    @property
+    def b2_arch_flags(self):
+        if self.b2_os == 'darwin' or self.b2_os == 'iphone':
+            return '<flags>"-arch {0}"'.format(self.apple_arch)
+        return ''
