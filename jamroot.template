@@ -126,6 +126,8 @@ constant BOOST_JAMROOT_MODULE : $(__name__) ;
 
 boostcpp.set-version $(BOOST_VERSION) ;
 
+local LIBPATH = {{{libpath}}} ;
+
 project boost
 :   requirements
     <define>BOOST_ALL_NO_LIB=1
@@ -133,7 +135,10 @@ project boost
     <link>shared,<runtime-link>static:<build>no
     <include>$(DEP_INCLUDES)
     <include>$(LIBRARIES)/include
+    <library-path>$(LIBPATH)
     {{{libcxx}}}
+    {{{arch_flags}}}
+    {{{isysroot}}}
 :   build-dir bin
 :   default-build {{{variant}}}
     <target-os>{{{os}}}
@@ -158,6 +163,13 @@ rule boost-install ( libraries * )
 {
     install stage : $(libraries) : <location>output ;
     module [ CALLER_MODULE ] { explicit stage ; }
+}
+
+rule boost-lib ( name : sources * : requirements * : default-build * : usage-requirements * )
+{
+    name = boost_$(name) ;
+    lib $(name) : $(sources) : $(requirements) : $(default-build) : $(usage-requirements) ;
+    boost-install $(name) ;
 }
 
 module boostcpp
