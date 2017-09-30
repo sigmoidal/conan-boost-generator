@@ -139,6 +139,7 @@ project boost
     {{{libcxx}}}
     {{{arch_flags}}}
     {{{isysroot}}}
+    {{{fpic}}}
 :   build-dir bin
 :   default-build {{{variant}}}
     <target-os>{{{os}}}
