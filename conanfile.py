@@ -356,5 +356,5 @@ class boost(Generator):
     @property
     def b2_fpic(self):
         if self.b2_os != 'windows' and self.b2_toolset in ['gcc', 'clang'] and self.b2_link == 'static':
-            return '<flags>-fPIC'
+            return '<flags>-fPIC\n<cxxflags>-fPIC'
         return ''
