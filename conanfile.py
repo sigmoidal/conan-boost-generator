@@ -111,7 +111,9 @@ class boost(Generator):
             .replace("{{{bzip2_lib_paths}}}", self.bzip2_lib_paths) \
             .replace("{{{bzip2_include_paths}}}", self.bzip2_include_paths) \
             .replace("{{{python_exec}}}", self.b2_python_exec) \
-            .replace("{{{python_version}}}", self.b2_python_version)
+            .replace("{{{python_version}}}", self.b2_python_version) \
+            .replace("{{{python_include}}}", self.b2_python_include) \
+            .replace("{{{python_lib}}}", self.b2_python_lib)
 
     @property
     def b2_os(self):
@@ -296,6 +298,40 @@ class boost(Generator):
                 '''{0} -c "from sys import *; print('%d.%d' % (version_info[0],version_info[1]))"'''.format(pyexec),
                 output=pyver)
             return pyver.value
+        else:
+            return ""
+    
+    @property
+    def b2_python_include(self):
+        pyexec = self.b2_python_exec
+        if pyexec:
+            class get_val():
+                def __init__(self):
+                    self.value = ""
+                def write(self,m):
+                    self.value = self.value+m.strip()
+            pyval = get_val()
+            self.conanfile.run(
+                '''{0} -c "import sysconfig; print(sysconfig.get_path('include'))"'''.format(pyexec),
+                output=pyval)
+            return pyval.value
+        else:
+            return ""
+    
+    @property
+    def b2_python_lib(self):
+        pyexec = self.b2_python_exec
+        if pyexec:
+            class get_val():
+                def __init__(self):
+                    self.value = ""
+                def write(self,m):
+                    self.value = self.value+m.strip()
+            pyval = get_val()
+            self.conanfile.run(
+                '''{0} -c "import sysconfig; print(sysconfig.get_path('stdlib'))"'''.format(pyexec),
+                output=pyval)
+            return os.path.dirname(pyval.value)
         else:
             return ""
 
