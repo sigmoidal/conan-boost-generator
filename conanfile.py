@@ -54,7 +54,8 @@ class boost(Generator):
             .replace("{{{libcxx}}}", self.b2_libcxx) \
             .replace("{{{libpath}}}", self.b2_icu_lib_paths) \
             .replace("{{{arch_flags}}}", self.b2_arch_flags) \
-            .replace("{{{isysroot}}}", self.b2_isysroot)
+            .replace("{{{isysroot}}}", self.b2_isysroot) \
+            .replace("{{{fpic}}}", self.b2_fpic)
 
 
         return {
@@ -350,4 +351,10 @@ class boost(Generator):
     def b2_isysroot(self):
         if self.b2_os == 'darwin' or self.b2_os == 'iphone':
             return '<flags>"-isysroot {0}"'.format(self.apply_isysroot)
+        return ''
+
+    @property
+    def b2_fpic(self):
+        if self.b2_os != 'windows' and self.b2_toolset in ['gcc', 'clang'] and self.b2_link == 'static':
+            return '<flags>-fPIC\n<cxxflags>-fPIC'
         return ''
