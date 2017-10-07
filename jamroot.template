@@ -135,6 +135,8 @@ project boost
     <link>shared,<runtime-link>static:<build>no
     <include>$(DEP_INCLUDES)
     <include>$(LIBRARIES)/include
+    <target-os>darwin:<cxxflags>-std=c++11
+    <target-os>darwin:<linkflags>-std=c++11
     <library-path>$(LIBPATH)
     {{{libcxx}}}
     {{{arch_flags}}}

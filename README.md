@@ -58,4 +58,4 @@ The following command both runs all the steps of the conan file, and publishes t
     $ conan upload --all --remote bincrafters Boost.Generator/1.64.0@bincrafters/stable
 
 ### License
-[Boost](LICENSE)
+[Boost](www.boost.org/LICENSE_1_0.txt)

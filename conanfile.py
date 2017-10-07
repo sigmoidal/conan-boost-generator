@@ -1,5 +1,6 @@
 from conans.model.conan_generator import Generator
 from conans import ConanFile, os, tools, load
+from io import StringIO
 import glob
 import subprocess
 
@@ -112,7 +113,9 @@ class boost(Generator):
             .replace("{{{bzip2_lib_paths}}}", self.bzip2_lib_paths) \
             .replace("{{{bzip2_include_paths}}}", self.bzip2_include_paths) \
             .replace("{{{python_exec}}}", self.b2_python_exec) \
-            .replace("{{{python_version}}}", self.b2_python_version)
+            .replace("{{{python_version}}}", self.b2_python_version) \
+            .replace("{{{python_include}}}", self.b2_python_include) \
+            .replace("{{{python_lib}}}", self.b2_python_lib)
 
     @property
     def b2_os(self):
@@ -287,20 +290,27 @@ class boost(Generator):
 
     @property
     def b2_python_version(self):
+        cmd = "from sys import *; print('%d.%d' % (version_info[0],version_info[1]))"
+        return self.run_python_command(cmd)
+      
+    @property
+    def b2_python_include(self):
+        return self.get_python_path("include").replace('\\', '/')
+    
+    @property
+    def b2_python_lib(self):
+        return os.path.dirname(self.get_python_path("stdlib")).replace('\\', '/')
+        
+    def get_python_path(self, dir_name):
+        cmd = "import sysconfig; print(sysconfig.get_path('{0}'))".format(dir_name)
+        return self.run_python_command(cmd)    
+                  
+    def run_python_command(self, cmd):
         pyexec = self.b2_python_exec
         if pyexec:
-            class get_pyver():
-                def __init__(self):
-                    self.value = ""
-
-                def write(self, m):
-                    self.value = self.value + m.strip()
-
-            pyver = get_pyver()
-            self.conanfile.run(
-                '''{0} -c "from sys import *; print('%d.%d' % (version_info[0],version_info[1]))"'''.format(pyexec),
-                output=pyver)
-            return pyver.value
+            output = StringIO()
+            self.conanfile.run('{0} -c "{1}"'.format(pyexec, cmd), output=output)
+            return output.getvalue()
         else:
             return ""
 
