@@ -1,6 +1,8 @@
 from conans.model.conan_generator import Generator
 from conans import ConanFile, os, tools, load
+from io import StringIO
 import glob
+import subprocess
 
 # This is the normal packaging info since generators
 # get published just like other packages. Although
@@ -51,9 +53,12 @@ class boost(Generator):
             .replace("{{{toolset_version}}}", self.b2_toolset_version) \
             .replace("{{{toolset_exec}}}", self.b2_toolset_exec) \
             .replace("{{{libcxx}}}", self.b2_libcxx) \
-            .replace("{{{libpath}}}", self.b2_icu_lib_paths)
-            
-           
+            .replace("{{{libpath}}}", self.b2_icu_lib_paths) \
+            .replace("{{{arch_flags}}}", self.b2_arch_flags) \
+            .replace("{{{isysroot}}}", self.b2_isysroot) \
+            .replace("{{{fpic}}}", self.b2_fpic)
+
+
         return {
             "jamroot" : jamroot_content,
             "boostcpp.jam" : self.get_boostcpp_content(), 
@@ -280,54 +285,33 @@ class boost(Generator):
         except:
             return ""
     
+    _python_version = ""
     @property
     def b2_python_version(self):
-        pyexec = self.b2_python_exec
-        if pyexec:
-            class get_pyver():
-                def __init__(self):
-                    self.value = ""
-                def write(self,m):
-                    self.value = self.value+m.strip()
-            pyver = get_pyver()
-            self.conanfile.run(
-                '''{0} -c "from sys import *; print('%d.%d' % (version_info[0],version_info[1]))"'''.format(pyexec),
-                output=pyver)
-            return pyver.value
-        else:
-            return ""
-    
+        cmd = "from sys import *; print('%d.%d' % (version_info[0],version_info[1]))"
+        self._python_version = self._python_version or self.run_python_command(cmd)
+        return self._python_version
+      
     @property
     def b2_python_include(self):
-        pyexec = self.b2_python_exec
-        if pyexec:
-            class get_val():
-                def __init__(self):
-                    self.value = ""
-                def write(self,m):
-                    self.value = self.value+m.strip()
-            pyval = get_val()
-            self.conanfile.run(
-                '''{0} -c "import sysconfig; print(sysconfig.get_path('include'))"'''.format(pyexec),
-                output=pyval)
-            return pyval.value
-        else:
-            return ""
+        return self.get_python_path("include").replace('\\', '/')
     
     @property
     def b2_python_lib(self):
+        stdlib_dir = os.path.dirname(self.get_python_path("stdlib")).replace('\\', '/')
+        config_dir = os.path.join(stdlib_dir, "python{0}".format(self.b2_python_version), "config")
+        return stdlib_dir  #"{0} {1}".format(stdlib_dir, config_dir)
+        
+    def get_python_path(self, dir_name):
+        cmd = "import sysconfig; print(sysconfig.get_path('{0}'))".format(dir_name)
+        return self.run_python_command(cmd)    
+                  
+    def run_python_command(self, cmd):
         pyexec = self.b2_python_exec
         if pyexec:
-            class get_val():
-                def __init__(self):
-                    self.value = ""
-                def write(self,m):
-                    self.value = self.value+m.strip()
-            pyval = get_val()
-            self.conanfile.run(
-                '''{0} -c "import sysconfig; print(sysconfig.get_path('stdlib'))"'''.format(pyexec),
-                output=pyval)
-            return os.path.dirname(pyval.value)
+            output = StringIO()
+            self.conanfile.run('{0} -c "{1}"'.format(pyexec, cmd), output=output)
+            return output.getvalue()
         else:
             return ""
 
@@ -339,3 +323,54 @@ class boost(Generator):
         except:
             pass
         return ""
+
+    @property
+    def apple_arch(self):
+        if self.settings.arch == "armv7":
+            return "armv7"
+        elif self.settings.arch == "armv8":
+            return "arm64"
+        elif self.settings.arch == "x86":
+            return "i386"
+        elif self.settings.arch == "x86_64":
+            return "x86_64"
+        else:
+            return None
+
+    @property
+    def apple_sdk(self):
+        if self.settings.os == "Macos":
+            return "macosx"
+        elif self.settings.os == "iOS":
+            if str(self.settings.arch).startswith('x86'):
+                return "iphonesimulator"
+            elif str(self.settings.arch).startswith('arm'):
+                return "iphoneos"
+            else:
+                return None
+        return None
+
+    def command_output(self, command):
+        return subprocess.check_output(command, shell=False).strip()
+
+    @property
+    def apply_isysroot(self):
+        return self.command_output(['xcrun', '--show-sdk-path', '-sdk', self.apple_sdk])
+
+    @property
+    def b2_arch_flags(self):
+        if self.b2_os == 'darwin' or self.b2_os == 'iphone':
+            return '<flags>"-arch {0}"'.format(self.apple_arch)
+        return ''
+
+    @property
+    def b2_isysroot(self):
+        if self.b2_os == 'darwin' or self.b2_os == 'iphone':
+            return '<flags>"-isysroot {0}"'.format(self.apply_isysroot)
+        return ''
+
+    @property
+    def b2_fpic(self):
+        if self.b2_os != 'windows' and self.b2_toolset in ['gcc', 'clang'] and self.b2_link == 'static':
+            return '<flags>-fPIC\n<cxxflags>-fPIC'
+        return ''
