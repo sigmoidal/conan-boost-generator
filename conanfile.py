@@ -182,7 +182,7 @@ class boost(Generator):
     def b2_toolset_exec(self):
         if self.b2_os == 'linux' or self.b2_os == 'freebsd' or self.b2_os == 'solaris' or self.b2_os == 'darwin':
             version = str(self.settings.compiler.version).split('.')
-            result_x = self.b2_toolset + "-" + version[0]
+            result_x = self.b2_toolset.replace('gcc','g++') + "-" + version[0]
             result_xy = result_x + version[1] if version[1] != '0' else ''
             class dev_null(object):
                 def write(self, message):
@@ -297,7 +297,11 @@ class boost(Generator):
       
     @property
     def b2_python_include(self):
-        return self.get_python_path("include").replace('\\', '/')
+        pyinclude = self.get_python_path("include")
+        if not os.path.exists(os.path.join(pyinclude, 'pyconfig.h')):
+            return ""
+        else:
+            return pyinclude.replace('\\', '/')
     
     @property
     def b2_python_lib(self):
