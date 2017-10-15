@@ -267,7 +267,7 @@ class boost(Generator):
     @property
     def b2_libcxx(self):
         if self.b2_toolset == 'gcc':
-            if str(self.settings.compiler.libcxx) == 'libstdc++11':
+            if  "-std=c++11" in self.deps_build_info["icu"].cppflags or str(self.settings.compiler.libcxx) == 'libstdc++11':
                 return '<cflags>-std=c++11 <linkflags>-std=c++11'
         elif self.b2_toolset == 'clang':
             if str(self.settings.compiler.libcxx) == 'libc++':
