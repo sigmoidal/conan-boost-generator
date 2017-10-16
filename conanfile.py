@@ -267,8 +267,13 @@ class boost(Generator):
     @property
     def b2_libcxx(self):
         if self.b2_toolset == 'gcc':
+            additional_libs = ''
+            if 'use_icu' in self.conanfile.options.fields and self.conanfile.options.use_icu:
+                additional_libs = ' -l'
+                additional_libs += ' -l'.join(self.deps_build_info["icu"].libs)
+                
             if  "-std=c++11" in self.deps_build_info["icu"].cppflags or str(self.settings.compiler.libcxx) == 'libstdc++11':
-                return '<cflags>-std=c++11 <linkflags>-std=c++11'
+                return '<cflags>-std=c++11 <linkflags>"-std=c++11{0}"'.format(additional_libs)
         elif self.b2_toolset == 'clang':
             if str(self.settings.compiler.libcxx) == 'libc++':
                 return '<cflags>-stdlib=libc++ <linkflags>-stdlib=libc++'
@@ -325,7 +330,8 @@ class boost(Generator):
     def b2_icu_lib_paths(self):
         try:
             if self.conanfile.options.use_icu:
-                return '"{0}"'.format('" "'.join(self.deps_build_info["icu"].lib_paths)).replace('\\', '/')
+                libpaths = '" "'.join(self.deps_build_info["icu"].lib_paths).replace('\\', '/')
+                return '"{0}"'.format(libpaths)
         except:
             pass
         return ""
